@@ -3,7 +3,7 @@ import Pages from "./Pages.js";
 import './Housekeeping.css';
 import { useNavigate } from 'react-router-dom';
 
-const HostPropertyCare = () => {
+const HostHousekeeping = () => {
     const navigate = useNavigate();
 
     const handleContactNavigation = () => {
@@ -30,4 +30,4 @@ const HostPropertyCare = () => {
     );
 }
 
-export default HostPropertyCare;
+export default HostHousekeeping;

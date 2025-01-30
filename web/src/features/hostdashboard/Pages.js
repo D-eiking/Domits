@@ -11,6 +11,7 @@ import CleanIcon from '@mui/icons-material/CleaningServicesOutlined';
 import FinanceIcon from '@mui/icons-material/CreditScoreOutlined';
 import PriceChangeIcon from '@mui/icons-material/PriceChange';
 import ListingIcon from '@mui/icons-material/OtherHousesOutlined';
+import PropertyIcon from '@mui/icons-material/BedOutlined';
 import SettingsIcon from '@mui/icons-material/Settings';
 import stripe from "../../images/icons/stripe-icon.png";
 import spinner from "../../images/spinnner.gif";
@@ -66,6 +67,7 @@ function Pages() {
                     <option value="/hostdashboard/calendar">Housekeeping</option>
                     <option value="/hostdashboard/calendar">Finance</option>
                     <option value="/hostdashboard/pricing">Pricing</option>
+                    <option value="/hostdashboard/property">property</option>
                     <option value="/hostdashboard/listings">Listing</option>
                     <option value="/hostdashboard/settings">Settings</option>
                 </select>
@@ -203,7 +205,15 @@ function Pages() {
         {/*  <img src={dashboard} alt="Dashboard" />*/}
         {/*  <p>Screening</p>*/}
         {/*</div>*/}
-        <br />
+        <br />     
+        <div
+          className={`wijzer ${activeTab === "/hostdashboard/property" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/property")}
+        >
+          <div className="Mui">
+          <PropertyIcon/></div>
+          <p>property</p>
+        </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard/listings" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/listings")}
