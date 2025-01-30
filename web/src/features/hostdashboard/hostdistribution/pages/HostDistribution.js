@@ -14,17 +14,13 @@ import {generateUUID} from "../../../../utils/generateUUID.js";
 import {getChannelLogo} from "../utils/getChannelLogo.js"
 import {handleICal} from "../utils/iCalHandler.js";
 import {handlePageRange} from "../utils/handlePageRange.js";
-import AddChannelButtonMenu from "../components/renderAddChannelButtonMenu"
+import {renderAddChannelButtonMenu} from "../components/renderAddChannelButtonMenu"
 import {deleteChannelService} from "../services/deleteChannelService.js";
 import {fetchChannels} from "../services/fetchChannelsService.js"
 import {handleAddChannelService} from "../services/addChannelService.js";
 import useFetchUser from "../../../../hooks/useFetchUser.js";
+import useFetchChannels from "../hooks/useFetchChannels.js";
 import useFetchAccommodations from "../hooks/useFetchAccommodations.js";
-import {toggleAddChannelButtonMenu} from "../utils/toggleAddChannelButtonMenu.js"
-import {toggleChannelManageMenu} from "../utils/toggleChannelManageMenu.js"
-import {toggleThreeDotsMenu} from "../utils/toggleThreeDotsMenu";
-import {renderThreeDotsMenu} from "../components/renderThreeDotsMenu";
-import useManageChannels from "../hooks/useManageChannels";
 
 function HostDistribution() {
     const userId = useFetchUser();
@@ -32,7 +28,7 @@ function HostDistribution() {
     const [dropdownAddChannelsVisible, setDropdownAddChannelsVisible] = useState(false);
     const [activeManageDropdown, setActiveManageDropdown] = useState(null);
     const [activeThreeDotsDropdown, setActiveThreeDotsDropdown] = useState(null);
-    const { channelData, setChannelData, refreshChannels } = useManageChannels(userId);
+    const channelData = useFetchChannels(userId);
     const [activeAddAccommodationsView, setActiveAddAccommodationsView] = useState(null);
     const [tempListedAccommodations, setTempListedAccommodations] = useState([]);
     const [activeRemoveAccommodationsView, setActiveRemoveAccommodationsView] = useState(null);
@@ -52,9 +48,12 @@ function HostDistribution() {
         console.log(channelData[0]);
     }, [channelData]);
 
-    const handleToggleAddChannel = () => {
-        toggleAddChannelButtonMenu(setDropdownAddChannelsVisible, setActiveManageDropdown, setActiveThreeDotsDropdown, setActiveRemoveAccommodationsView);
-    };
+    const toggleAddChannelButtonMenu = () => {
+        setDropdownAddChannelsVisible(!dropdownAddChannelsVisible);
+        setActiveManageDropdown(null);
+        setActiveThreeDotsDropdown(null);
+        setActiveRemoveAccommodationsView(null);
+    }
 
     const handleSelectChange = (event) => {
         setSelectedChannel(event.target.value);
@@ -89,9 +88,61 @@ function HostDistribution() {
         }
     };
 
-    const handleToggleManageMenu = (channelId) => {
-        toggleChannelManageMenu(channelId, activeManageDropdown, setActiveManageDropdown, setDropdownAddChannelsVisible, setActiveThreeDotsDropdown, setActiveAddAccommodationsView, setActiveRemoveAccommodationsView);
+    const renderAddChannelButtonMenu = () => {
+
+        const availableChannels = allChannels.filter(channel => !addedChannels.includes(channel));
+
+        return (
+            <div className="addChannelButtonMenuContent">
+                <div className="addChannelInputFields">
+                    <label className="channelLabel">Channel</label>
+                    <div className="channelCustomDropdown">
+                        <select
+                            className="channels"
+                            value={selectedChannel}
+                            onChange={handleSelectChange}
+                        >
+                            <option value="Select Channel">Select Channel</option>
+                            {availableChannels.map(channel => (
+                                <option key={channel} value={channel}>
+                                    {channel}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <label className="channelLabel">API Key</label>
+                    <input
+                        type={"text"}
+                        placeholder={"API Key"}
+                        className={"channelAPIKey"}
+                        value={apiKey}
+                        onChange={handleInputChange}
+                    />
+                </div>
+                <div className="addCancelButtonContainer">
+                    <button className={"addChannelButtonMenuButton Cancel"} onClick={handleCancelAddChannel}>Cancel
+                    </button>
+                    <button className="addChannelButtonMenuButton Add" onClick={handleAddChannel}>Add</button>
+                </div>
+            </div>
+        );
     };
+
+    const toggleChannelManageMenu = (channelId) => {
+        if (activeManageDropdown === channelId) {
+            setActiveManageDropdown(null);
+            setDropdownAddChannelsVisible(false);
+            setActiveThreeDotsDropdown(null);
+            setActiveAddAccommodationsView(null);
+            setActiveRemoveAccommodationsView(null);
+        } else {
+            setActiveManageDropdown(channelId);
+            setDropdownAddChannelsVisible(false);
+            setActiveThreeDotsDropdown(null);
+            setActiveAddAccommodationsView(null);
+            setActiveRemoveAccommodationsView(null);
+        }
+    }
 
     const handleEnableButton = (channelId) => {
         setChannelData(prevState => {
@@ -331,9 +382,124 @@ function HostDistribution() {
         );
     };
 
-    const handleToggleThreeDots = (channelId) => {
-        toggleThreeDotsMenu(channelId, setActiveThreeDotsDropdown);
+    const handelSingleChannelSave = async (channelId) => {
+        const channel = channelData.find(channel => channel.id.S === channelId);
+
+        if (!channel) {
+            console.error(`Channel with ID ${channelId} not found`);
+            return;
+        }
+
+        const accommodationsToSync = tempListedAccommodations[channelId] || [];
+
+        if (accommodationsToSync.length === 0) {
+            try {
+                const response = await fetch('https://9uv5o7aiz6.execute-api.eu-north-1.amazonaws.com/dev/Host-ChannelManagement-Production-Update-Channel', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        id: channelId,
+                        APIKey: channel.APIKey.S,
+                        ChannelName: channel.ChannelName.S,
+                        ListedAccommodations: channel.ListedAccommodations.L || {L: []},
+                        Status: channel.Status,
+                        UserId: channel.UserId
+                    }),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.statusCode === 200) {
+                    alert('Channel synced successfully!');
+                } else {
+                    alert('Failed to sync the channel');
+                }
+            } catch (error) {
+                console.error('Error syncing the channel without changes:', error);
+            }
+            setActiveThreeDotsDropdown(null);
+            return;
+        }
+
+        const currentListedAccommodations = channel.ListedAccommodations?.L || [];
+        const updatedListedAccommodations = [
+            ...currentListedAccommodations,
+            ...accommodationsToSync.map(acc => ({
+                M: {
+                    AccommodationId: {S: acc.AccommodationId},
+                    Title: {S: acc.Title.S},
+                    GuestAmount: {N: acc.GuestAmount.N},
+                    Rent: {S: acc.Rent.S},
+                    Availability: {S: acc.Availability.S}
+                }
+            }))
+        ];
+
+        try {
+            const response = await fetch('https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/EditSingleChannel', {
+                method: 'PUT',
+                body: JSON.stringify({
+                    id: channelId,
+                    APIKey: channel.APIKey.S,
+                    ChannelName: channel.ChannelName.S,
+                    ListedAccommodations: {L: updatedListedAccommodations.L},
+                    Status: channel.Status,
+                    UserId: channel.UserId
+                }),
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8'
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.statusCode === 200) {
+                alert('Accommodations synced successfully!');
+
+                setTempListedAccommodations(prevState => {
+                    const newState = {...prevState};
+                    delete newState[channelId];
+                    return newState;
+                });
+
+                setChannelData(prevState => {
+                    const updatedChannels = [...prevState];
+                    const channelIndex = updatedChannels.findIndex(ch => ch.id === channelId);
+                    if (channelIndex !== -1) {
+                        updatedChannels[channelIndex].ListedAccommodations.L = updatedListedAccommodations;
+                    }
+                    setActiveThreeDotsDropdown(null);
+                    return updatedChannels;
+                });
+            } else {
+                alert('Failed to sync accommodations');
+            }
+        } catch (error) {
+            console.error('Error syncing accommodations:', error);
+        }
     };
+
+    const toggleThreeDotsMenu = (channelId) => {
+        setActiveThreeDotsDropdown((prev) => (prev === channelId ? null : channelId));
+    };
+
+    const renderThreeDotsMenu = (channelId) => {
+        console.log(channelId);
+        return (
+            <div className="threeDotsMenuContent">
+                <button className="threeDotsButtonMenu delete"
+                        onClick={() => deleteChannelService(channelId, channelData, setCurrentPannel, setActiveThreeDotsDropdown)}>
+                    Delete
+                </button>
+                <button className="threeDotsButtonMenu"
+                        onClick={() => handelSingleChannelSave(channelId)}>
+                    Save
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="containerHostDistribution">
@@ -343,19 +509,11 @@ function HostDistribution() {
                     Export to calender
                 </button>
                 <div className="addChannelButtonMenuContainer">
-                    <button className="addChannelButton" onClick={handleToggleAddChannel}>
+                    <button className="addChannelButton" onClick={toggleAddChannelButtonMenu}>
                         + Add channel
                     </button>
                     <div className={`addChannelButtonMenu ${dropdownAddChannelsVisible ? 'visible' : ''}`}>
-                        <AddChannelButtonMenu
-                            addedChannels={addedChannels}
-                            selectedChannel={selectedChannel}
-                            handleSelectChange={handleSelectChange}
-                            apiKey={apiKey}
-                            handleInputChange={handleInputChange}
-                            handleCancelAddChannel={handleCancelAddChannel}
-                            handleAddChannel={handleAddChannel}
-                        />
+                        {renderAddChannelButtonMenu(addedChannels)}
                     </div>
                 </div>
             </div>
@@ -395,7 +553,7 @@ function HostDistribution() {
                                             Accommodations</p>
 
                                         <button className="channelManageButton"
-                                                onClick={() => handleToggleManageMenu(channel.id.S)}>
+                                                onClick={() => toggleChannelManageMenu(channel.id.S)}>
                                             Manage
                                         </button>
                                         {activeManageDropdown === channel.id.S && (
@@ -405,19 +563,13 @@ function HostDistribution() {
                                         )}
 
                                         <button className="threeDotsButton"
-                                                onClick={() => handleToggleThreeDots(channel.id.S)}>
+                                                onClick={() => toggleThreeDotsMenu(channel.id.S)}>
                                             <img src={three_dots} alt="Three Dots"/>
                                         </button>
 
                                         {activeThreeDotsDropdown === channel.id.S && (
                                             <div className="threeDotsContainer visible">
-                                                {renderThreeDotsMenu(
-                                                    channel.id.S,
-                                                    channelData,
-                                                    tempListedAccommodations,
-                                                    setTempListedAccommodations,
-                                                    setActiveThreeDotsDropdown
-                                                )}
+                                                {renderThreeDotsMenu(channel.id.S)}
                                             </div>
                                         )}
                                     </div>
