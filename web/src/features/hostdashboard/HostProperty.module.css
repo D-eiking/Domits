@@ -1,0 +1,51 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .propertyHeader {
+    display: flex;
+    align-items: center; 
+    justify-content: flex-start; 
+    gap: 10px; 
+    padding: 10px;
+    width: 100%;
+  }
+  
+  .propertyHeader h1 {
+    margin: 0; 
+  }
+  
+  
+  .sidebar {
+    padding: 50px;
+  }
+  
+  .content {
+    flex-grow: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .hostPropertyContainer {
+    width: 100%;
+    max-width: 800px;
+    text-align: center;
+  }
+  
+  .spinnerContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+  }
+  
+  .responsiveText {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+  }
+  
