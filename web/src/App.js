@@ -25,16 +25,11 @@ import HostListings from "./features/hostdashboard/HostListings";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import HostSettings from "./features/hostdashboard/HostSettings";
 import HostReviews from "./features/hostdashboard/HostReviews";
-<<<<<<< HEAD
+
+import HostProperty from "./features/hostdashboard/HostProperty";
 import ListingDetails from './features/bookingengine/ListingDetails';
 import BookingOverview from './features/bookingengine/BookingOverview';
 import BookingConfirmation from "./features/bookingengine/PaymentConfirm";
-=======
-import HostProperty from "./features/hostdashboard/HostProperty";
-import ListingDetails from './components/booking/ListingDetails';
-import BookingOverview from './components/booking/BookingOverview';
-import BookingConfirmation from "./components/booking/PaymentConfirm";
->>>>>>> ca201137 (navigation)
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
