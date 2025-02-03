@@ -18,6 +18,7 @@ import Careers from "./pages/careers/Careers";
 import JobDetails from "./pages/careers/jobDetails.js";
 import Contact from "./pages/contact/Contact";
 import HostOnboarding from "./pages/landingpage/OnboardingHost";
+import HostProperty from "./features/hostdashboard/HostProperty";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
 import HostMessages from "./features/hostdashboard/HostMessages";
 import HostPayments from "./features/hostdashboard/HostPayments";
